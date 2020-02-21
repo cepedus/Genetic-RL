@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 class GeneticNeuralNetwork(Sequential):
     # Constructor
-    def __init__(self, layers_shapes, child_weights=None):
+    def __init__(self, layers_shapes, child_weights=None, dropout=(True, 0.1)):
         # Initialize Sequential Model Super Class
         super().__init__()
 
@@ -26,20 +26,31 @@ class GeneticNeuralNetwork(Sequential):
         if child_weights is None:
             # Layers are created and randomly generated
             layers = [Dense(layers_shapes[1], input_shape=(layers_shapes[0],), activation='sigmoid')]
+            if dropout[0]:
+                layers.append(Dropout(dropout[1]))
             for shape in layers_shapes[2:-1]:
                 layers.append(Dense(shape, activation='sigmoid'))
+                if dropout[0]:
+                    layers.append(Dropout(dropout[1]))
             layers.append(Dense(layers_shapes[-1], activation='sigmoid'))
-
+            if dropout[0]:
+                layers.append(Dropout(dropout[1]))
         # If weights are provided set them within the layers
         else:
             # Set weights within the layers
             layers = [Dense(layers_shapes[1], input_shape=(layers_shapes[0],), activation='sigmoid',
                             weights=[child_weights[0], np.zeros(layers_shapes[1])])]
+            if dropout[0]:
+                layers.append(Dropout(dropout[1]))
             for i, shape in enumerate(layers_shapes[2:-1]):
                 layers.append(Dense(shape, activation='sigmoid',
                                     weights=[child_weights[i+1], np.zeros(shape)]))
+                if dropout[0]:
+                    layers.append(Dropout(dropout[1]))
             layers.append(Dense(layers_shapes[-1], activation='sigmoid',
                                 weights=[child_weights[-1], np.zeros(layers_shapes[-1])]))
+            if dropout[0]:
+                layers.append(Dropout(dropout[1]))
         for layer in layers:
             self.add(layer)
 
@@ -76,9 +87,13 @@ class GeneticNeuralNetwork(Sequential):
         child_weights = []
         # Get all weights from all layers in the networks
         for layer_1 in self.layers:
-            nn1_weights.append(layer_1.get_weights()[0])
+            w = layer_1.get_weights()
+            if w:
+                nn1_weights.append(w[0])
         for layer_2 in nn2.layers:
-            nn2_weights.append(layer_2.get_weights()[0])
+            w = layer_2.get_weights()
+            if w:
+                nn2_weights.append(w[0])
 
         for i in range(0, len(nn1_weights)):
             for j in range(np.shape(nn1_weights[i])[1] - 1):
@@ -110,7 +125,7 @@ if __name__ == '__main__':
     layers_shapes = [X.shape[1], 4, 2, 1]
 
     # Define if the training starts from zero or from pre-trained model
-    train_from_scratch = False
+    train_from_scratch = True
 
     # Create a List of all active GeneticNeuralNetworks
     networks = []
@@ -122,11 +137,13 @@ if __name__ == '__main__':
 
     if not train_from_scratch:
         gnn = GeneticNeuralNetwork(layers_shapes)
-        gnn.load_weights('trained_model.h5')
+        gnn.load_weights('trained_model_vf.h5')
 
         optimal_weights = []
         for layer in gnn.layers:
-            optimal_weights.append(layer.get_weights()[0])
+            w = layer.get_weights()
+            if w:
+                optimal_weights.append(w[0])
 
         max_fitness = gnn.fitness
 
@@ -147,7 +164,23 @@ if __name__ == '__main__':
         optimal_weights = []
 
     # Evolution Loop
-    while max_fitness < .99:
+    while max_fitness < .9:
+
+        if generation > 0:
+            # Crossover, top 4 randomly select 2 partners for child
+            print('Mixing the top 4 individuals...')
+            for i in tqdm(range(4)):
+                for j in range(2):
+                    # Create a child and add to networks
+                    temp = pool[i].dynamic_crossover(random.choice(pool))
+                    # Add to networks to calculate fitness score next iteration
+                    networks.append(temp)
+
+            if generation % 4 == 0:  # After 4 generations we run a 1 epoch fit on the best
+                print('Gradient Descent on these individuals, one epoch')
+                for gnn in networks:
+                    gnn.compile_train(X_train, y_train, 1)
+
         # log the current generation
         generation += 1
         print(f'Generation: {generation}')
@@ -173,21 +206,15 @@ if __name__ == '__main__':
             # If there is a new max fitness among the population
             if pool[i].fitness > max_fitness:
                 max_fitness = pool[i].fitness
-                print(f'Max Fitness: {max_fitness}')
                 # Reset optimal_weights
+                optimal_weights = []
                 # Iterate through layers and append the layers' weights to optimal
                 for layer in pool[i].layers:
-                    optimal_weights.append(layer.get_weights()[0])
+                    w = layer.get_weights()
+                    if w:
+                        optimal_weights.append(w[0])
+                print(f'Max Fitness: {max_fitness}')
                 print(optimal_weights)
-
-        # Crossover, top 4 randomly select 2 partners for child
-        print('Mixing the top 4 individuals...')
-        for i in tqdm(range(4)):
-            for j in range(2):
-                # Create a child and add to networks
-                temp = pool[i].dynamic_crossover(random.choice(pool))
-                # Add to networks to calculate fitness score next iteration
-                networks.append(temp)
 
     # Create a Genetic Neural Network with optimal inital weights
     gnn = GeneticNeuralNetwork(layers_shapes, optimal_weights)
