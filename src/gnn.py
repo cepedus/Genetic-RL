@@ -1,4 +1,6 @@
 # code inspired from https://medium.com/swlh/genetic-artificial-neural-networks-d6b85578ba99
+# Also from https://github.com/robertjankowski/ga-openai-gym/blob/491b7384dff4984367d526ce6f7fd02625128cc7/scripts/ga/individual.py#L82
+
 
 # ======= Defining our Genetic Neural Network ======= #
 import random
@@ -14,99 +16,116 @@ from tqdm import tqdm
 
 class GeneticNeuralNetwork(Sequential):
     # Constructor
-    def __init__(self, layers_shapes, child_weights=None, dropout=(True, 0.1)):
+    def __init__(self, layers_shapes, child_weights=None, dropout=0):
         # Initialize Sequential Model Super Class
         super().__init__()
 
         # Add layers_shape as a property of our Neural Network
         self.layers_shapes = layers_shapes
         self.fitness = 0
+        self.dropout = dropout
 
         # If no weights provided randomly generate them
         if child_weights is None:
             # Layers are created and randomly generated
-            layers = [Dense(layers_shapes[1], input_shape=(layers_shapes[0],), activation='sigmoid')]
-            if dropout[0]:
-                layers.append(Dropout(dropout[1]))
+            layers = [Dense(layers_shapes[1], input_shape=(layers_shapes[0],), activation='sigmoid'),
+                      Dropout(dropout)]
             for shape in layers_shapes[2:-1]:
                 layers.append(Dense(shape, activation='sigmoid'))
-                if dropout[0]:
-                    layers.append(Dropout(dropout[1]))
-            layers.append(Dense(layers_shapes[-1], activation='sigmoid'))
-            if dropout[0]:
-                layers.append(Dropout(dropout[1]))
+                layers.append(Dropout(dropout))
+            layers.append(Dense(layers_shapes[-1], activation='softmax'))
+            layers.append(Dropout(dropout))
         # If weights are provided set them within the layers
         else:
             # Set weights within the layers
             layers = [Dense(layers_shapes[1], input_shape=(layers_shapes[0],), activation='sigmoid',
-                            weights=[child_weights[0], np.zeros(layers_shapes[1])])]
-            if dropout[0]:
-                layers.append(Dropout(dropout[1]))
+                            weights=[child_weights[0], np.zeros(layers_shapes[1])]),
+                      Dropout(dropout)]
             for i, shape in enumerate(layers_shapes[2:-1]):
                 layers.append(Dense(shape, activation='sigmoid',
-                                    weights=[child_weights[i+1], np.zeros(shape)]))
-                if dropout[0]:
-                    layers.append(Dropout(dropout[1]))
-            layers.append(Dense(layers_shapes[-1], activation='sigmoid',
+                                    weights=[child_weights[i + 1], np.zeros(shape)]))
+                layers.append(Dropout(dropout))
+            layers.append(Dense(layers_shapes[-1], activation='softmax',
                                 weights=[child_weights[-1], np.zeros(layers_shapes[-1])]))
-            if dropout[0]:
-                layers.append(Dropout(dropout[1]))
+            layers.append(Dropout(dropout))
         for layer in layers:
             self.add(layer)
 
     # Function for foward propagating a row vector of a matrix
-    def forward_propagation(self, X_train, y_train):
-        # Forward propagation
-        y_pred = self.predict(X_train).reshape(-1,).round()
-        # Compute fitness score
-        self.fitness = accuracy_score(y_train, y_pred)
+    def run_single(self, env, n_episodes=300, render=False):
+        raise NotImplementedError
+        # # Forward propagation
+        # y_pred = [np.argmax(np.array(y)) for y in self.predict(X_train)]
+        # # Compute fitness score
+        # self.fitness = accuracy_score(y_train, y_pred)
 
     # Standard Backpropagation
     def compile_train(self, X_train, y_train, epochs):
-        self.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['accuracy'])
+        raise NotImplementedError
+        # self.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        #
+        # self.fit(X_train, y_train, epochs=epochs)
 
-        self.fit(X_train, y_train, epochs=epochs)
 
-    @staticmethod
-    def mutation(weights):
-        # weights is a NxM matrix
-        for i, line in enumerate(weights):
-            for j in range(len(line)):
-                if random.uniform(0, 1) > 0.9:
-                    weights[i][j] *= random.uniform(2, 5)
-        return weights
-    # Crossover traits between two Genetic Neural Networks
-    def dynamic_crossover(self, nn2):
+def mutation(weights, p_mutation=0.9):
+    # weights is a NxM matrix
+    for i, line in enumerate(weights):
+        for j in range(len(line)):
+            if random.uniform(0, 1) > p_mutation:
+                weights[i][j] *= random.uniform(2, 5)
+    return weights
 
-        # Assert both Neural Networks are of the same format
-        assert self.layers_shapes == nn2.layers_shapes
 
-        # Lists for respective weights
-        nn1_weights = []
-        nn2_weights = []
-        child_weights = []
-        # Get all weights from all layers in the networks
-        for layer_1 in self.layers:
-            w = layer_1.get_weights()
-            if w:
-                nn1_weights.append(w[0])
-        for layer_2 in nn2.layers:
-            w = layer_2.get_weights()
-            if w:
-                nn2_weights.append(w[0])
+# Crossover traits between two Genetic Neural Networks
+def dynamic_crossover(nn1, nn2, p_mutation=0.9):
+    # Assert both Neural Networks are of the same format
+    assert nn1.layers_shapes == nn2.layers_shapes
+    assert nn1.dropout == nn2.dropout
 
-        for i in range(0, len(nn1_weights)):
-            for j in range(np.shape(nn1_weights[i])[1] - 1):
-                nn1_weights[i][:, j] = random.choice([nn1_weights[i][:, j], nn2_weights[i][:, j]])
+    # Lists for respective weights
+    nn1_weights = []
+    nn2_weights = []
+    child_weights = []
+    # Get all weights from all layers in the networks
+    for layer_1 in nn1.layers:
+        w = layer_1.get_weights()
+        if w:
+            nn1_weights.append(w[0])
+    for layer_2 in nn2.layers:
+        w = layer_2.get_weights()
+        if w:
+            nn2_weights.append(w[0])
 
-            # After crossover add weights to child
-            child_weights.append(nn1_weights[i])
+    for i in range(0, len(nn1_weights)):
+        for j in range(np.shape(nn1_weights[i])[1] - 1):
+            nn1_weights[i][:, j] = random.choice([nn1_weights[i][:, j], nn2_weights[i][:, j]])
 
-        # add a chance for mutation
-        child_weights = GeneticNeuralNetwork.mutation(child_weights)
+        # After crossover add weights to child
+        child_weights.append(nn1_weights[i])
 
-        # Create and return child object
-        return GeneticNeuralNetwork(layers_shapes=self.layers_shapes, child_weights=child_weights)
+    # add a chance for mutation
+    child_weights = mutation(child_weights, p_mutation)
+
+    # Create and return child object
+    return GeneticNeuralNetwork(layers_shapes=nn1.layers_shapes, child_weights=child_weights, dropout=nn1.dropout)
+
+
+def random_pick(population):
+    total_fitness = np.sum([gnn.fitness for gnn in population])
+    selection_probabilities = [gnn.fitness / total_fitness for gnn in population]
+    pick_1 = np.random.choice(len(population), p=selection_probabilities)
+    pick_2 = np.random.choice(len(population), p=selection_probabilities)
+    return population[pick_1], population[pick_2]
+
+
+def ranking_pick(population):
+    sorted_population = sorted(population, key=lambda gnn: gnn.fitness, reverse=True)
+    return sorted_population[:2]
+
+
+def statistics(population):
+    population_fitness = [individual.fitness for individual in population]
+    return np.mean(population_fitness), np.min(population_fitness), np.max(population_fitness)
 
 
 if __name__ == '__main__':
@@ -122,7 +141,7 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     # Define the layers shapes
-    layers_shapes = [X.shape[1], 4, 2, 1]
+    layers_shapes = [X.shape[1], 4, 2, 2]
 
     # Define if the training starts from zero or from pre-trained model
     train_from_scratch = True
@@ -164,7 +183,7 @@ if __name__ == '__main__':
         optimal_weights = []
 
     # Evolution Loop
-    while max_fitness < .9:
+    while max_fitness < .95:
 
         if generation > 0:
             # Crossover, top 4 randomly select 2 partners for child
@@ -223,5 +242,5 @@ if __name__ == '__main__':
     # Serialize weights to HDF5
     gnn.save_weights('trained_model.h5')
     # Test the Genetic Neural Network Out of Sample
-    y_hat = gnn.predict(X_test).reshape(-1,).round()
+    y_hat = gnn.predict(X_test).reshape(-1, ).round()
     print(f'Test Accuracy: {accuracy_score(y_test, y_hat)}')

@@ -1,0 +1,8 @@
+Banknote:
+    With dropout=0.1 we had a increase of fitness in a really low number of generations (maybe a bug?)
+    Altough the test Accuracy was really low
+    I re-run the code from scratch and took me () generations to get 90% score on training
+
+
+    One ideia that came up to my mind is that maybe if after a number X of generations we run a Gradient Descent on the
+    best of the generation we may have good results

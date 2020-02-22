@@ -1,10 +1,6 @@
 import gym
 from gnn import GeneticNeuralNetwork
 
-# ====== Setting up Environment ======= #
-env = gym.make("CartPole-v1")
-env.reset()
-
 # Defining constants
 goal_steps = 500  # Our fitness objective
 score_requirement = 50  # Our baseline score for random population
@@ -44,6 +40,10 @@ def onehot_reshape(game_memory):
     return training_data
 
 
+# ====== Setting up Environment ======= #
+env = gym.make("CartPole-v1")
+env.reset()
+
 # ====== Genetic Evolution using GNN ====== #
 
 # Define the layers shapes
@@ -57,6 +57,8 @@ train_from_scratch = False
 
 # Create a List of all active GeneticNeuralNetworks
 networks = []
+observations = []  # To track the actual stage of each network
+prev_obs = []  # The previous observation of each network
 pool = []
 # Track Generations
 generation = 0
