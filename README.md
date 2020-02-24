@@ -8,7 +8,8 @@ http://gym.openai.com/envs/BipedalWalkerHardcore-v2
 http://gym.openai.com/envs/LunarLanderContinuous-v2
 
 
-Truc  lire:
+Trucs  lire:
+
 https://github.com/tensorflow/minigo?fbclid=IwAR0i-mFp0CWRzdCmBcuKzxr_z-0IUMHKWdPmOT8yB7Z6qdilclNP1LepMH0
 
 https://becominghuman.ai/summary-of-the-alphago-paper-b55ce24d8a7c
