@@ -1,6 +1,6 @@
 import gym
 import copy
-from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover
+from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network
 from population_gnn import Population
 import numpy as np
 
@@ -60,8 +60,17 @@ if __name__ == '__main__':
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
+    baseline_fitness = 50
 
-    p = Population(CartPoleGNN(layers_shapes, dropout=dropout_rate),
+    initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
+
+    # Mutate network until minimum performance
+    initial_fitness = 0
+    while initial_fitness < baseline_fitness:
+        initial_fitness = initial_network.run_single(env)
+        mutate_network(initial_network, 0.9)
+
+    p = Population(initial_network,
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
