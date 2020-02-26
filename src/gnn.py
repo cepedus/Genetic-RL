@@ -51,6 +51,14 @@ class GeneticNeuralNetwork(Sequential):
         for layer in layers:
             self.add(layer)
 
+    def update_weights(self, network_weights):  # TODO we don't update bias
+        count = 0
+        for layer in self.layers:
+            w = layer.get_weights()
+            if w:
+                layer.set_weights([network_weights[count], w[1]])
+                count += 1
+
     # Function for foward propagating a row vector of a matrix
     def run_single(self, env, n_episodes=300, render=False):
         raise NotImplementedError
@@ -75,7 +83,7 @@ class GeneticNeuralNetwork(Sequential):
         return
 
 
-def mutation(network_weights, p_mutation=0.5):
+def mutation(network_weights, p_mutation=0.7):
     # weights is a NxM matrix
     # for i, line in enumerate(weights):
     #     for j in range(len(line)):
@@ -95,9 +103,21 @@ def mutation(network_weights, p_mutation=0.5):
     return network_weights
 
 
+def mutate_network(network, p_mutation=0.7):
+    # Lists for respective weights
+    nn_weights = []
+    for layer in network.layers:
+        w = layer.get_weights()
+        if w:
+            nn_weights.append(w[0])
+
+    nn_weights = mutation(nn_weights, p_mutation)
+    network.update_weights(nn_weights)
+    return network
+
 
 # Crossover traits between two Genetic Neural Networks
-def dynamic_crossover(nn1, nn2, p_mutation=0.9):
+def dynamic_crossover(nn1, nn2, p_mutation=0.7):
     # Assert both Neural Networks are of the same format
     assert nn1.layers_shapes == nn2.layers_shapes
     assert nn1.dropout == nn2.dropout

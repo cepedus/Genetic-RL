@@ -3,13 +3,15 @@ from copy import deepcopy, copy
 from gnn import statistics
 from datetime import datetime
 from getpass import getuser
+from gnn import mutate_network
+
 
 class Population:
     def __init__(self, gnn, pop_size, max_generation, p_mutation):
         self.pop_size = pop_size  # Population size (number of neural networks in a generation/population)
         self.max_generation = max_generation  # Max number of generations until the end
         self.p_mutation = p_mutation  # Proba of mutation
-        self.old_population = [gnn for _ in range(pop_size)]
+        self.old_population = [mutate_network(gnn) for _ in range(pop_size)]
         self.new_population = []
 
 #    @timing

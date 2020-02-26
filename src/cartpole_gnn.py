@@ -14,8 +14,8 @@ class CartPoleGNN(GeneticNeuralNetwork):
             if render:
                 env.render()
             action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
-            # action = action_dist.index(np.random.choice(action_dist, p=action_dist))
-            action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
+            action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
+            # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
             obs, reward, done, _ = env.step(round(action.item()))
             fitness += reward
             if done:
