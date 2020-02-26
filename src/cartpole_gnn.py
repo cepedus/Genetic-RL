@@ -65,6 +65,6 @@ if __name__ == '__main__':
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
-    p.run(env, run_generation, verbose=True, output_folder='../models/cartpole', log=True)
+    p.run(env, run_generation, verbose=True, output_folder='../models/cartpole/', log=True)
 
     env.close()

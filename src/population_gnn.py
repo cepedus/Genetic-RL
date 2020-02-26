@@ -2,7 +2,7 @@ from typing import Callable
 from copy import deepcopy, copy
 from gnn import statistics
 from datetime import datetime
-
+from getpass import getuser
 
 class Population:
     def __init__(self, gnn, pop_size, max_generation, p_mutation):
@@ -40,9 +40,10 @@ class Population:
         """
         date = datetime.now().strftime('%m-%d-%Y_%H-%M')
         file_name = 'logs.csv'
+        username = getuser()
         mean, min, max = statistics(self.new_population)
         stats = f'{date},{n_gen},{mean},{min},{max}\n'
-        with open(output_folder + file_name, 'a') as f:
+        with open(output_folder + username + '-' + file_name, 'a') as f:
             f.write(stats)
 
     def show_stats(self, n_gen):
