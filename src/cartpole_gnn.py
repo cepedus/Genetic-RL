@@ -7,10 +7,10 @@ import numpy as np
 
 class CartPoleGNN(GeneticNeuralNetwork):
 
-    def run_single(self, env, n_episodes=600, render=False):
+    def run_single(self, env, render=False):
         obs = env.reset()
         fitness = 0
-        for _ in range(n_episodes):
+        while True:
             if render:
                 env.render()
             action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = 50
+    baseline_fitness = 100
 
     initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
 
@@ -68,12 +68,12 @@ if __name__ == '__main__':
     initial_fitness = 0
     while initial_fitness < baseline_fitness:
         initial_fitness = initial_network.run_single(env)
-        mutate_network(initial_network, 0.9)
-
+        initial_network = mutate_network(initial_network, 0.9)
+    print('Ancestral Fitness: ', initial_fitness)
     p = Population(initial_network,
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
-    p.run(env, run_generation, verbose=True, output_folder='../models/cartpole/', log=True)
+    p.run(env, run_generation, verbose=True, output_folder='../models/cartpole/', log=True, render=True)
 
     env.close()

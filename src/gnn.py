@@ -60,7 +60,7 @@ class GeneticNeuralNetwork(Sequential):
                 count += 1
 
     # Function for foward propagating a row vector of a matrix
-    def run_single(self, env, n_episodes=300, render=False):
+    def run_single(self, env, render=False):
         raise NotImplementedError
         # # Forward propagation
         # y_pred = [np.argmax(np.array(y)) for y in self.predict(X_train)]
