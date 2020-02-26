@@ -7,23 +7,25 @@ import numpy as np
 
 class CartPoleGNN(GeneticNeuralNetwork):
 
-    def run_single(self, env, n_episodes=300, render=False):
+    def run_single(self, env, n_episodes=600, render=False):
         obs = env.reset()
         fitness = 0
         for _ in range(n_episodes):
             if render:
                 env.render()
-            action_dist = self.predict(np.array([np.array(obs).reshape(-1,)]))[0]
-            action = np.argmax(action_dist)
+            action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
+            # action = action_dist.index(np.random.choice(action_dist, p=action_dist))
+            action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
             obs, reward, done, _ = env.step(round(action.item()))
             fitness += reward
             if done:
                 break
         self.fitness = fitness
+        return fitness
 
 
-def generation(env, old_population, new_population, p_mutation):
-    for i in range(0, len(old_population)-1, 2):
+def run_generation(env, old_population, new_population, p_mutation):
+    for i in range(0, len(old_population) - 1, 2):
         # Selection
         parent1, parent2 = ranking_pick(old_population)
 
@@ -40,9 +42,9 @@ def generation(env, old_population, new_population, p_mutation):
         child2.run_single(env)
 
         # If children fitness is greater than parents update population
-        if child1.fitness + child2.fitness > parent1.fitness +parent2.fitness:
+        if child1.fitness + child2.fitness > parent1.fitness + parent2.fitness:
             new_population[i] = child1
-            new_population[i+1] = child2
+            new_population[i + 1] = child2
         else:
             new_population[i] = parent1
             new_population[i + 1] = parent2
@@ -53,8 +55,8 @@ if __name__ == '__main__':
     env.seed(123)
 
     POPULATION_SIZE = 10
-    MAX_GENERATION = 10
-    MUTATION_RATE = 0.9
+    MAX_GENERATION = 20
+    MUTATION_RATE = 0.7
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
@@ -63,6 +65,6 @@ if __name__ == '__main__':
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
-    p.run(env, generation, verbose=True, output_folder='../models/cartpole', log=True)
+    p.run(env, run_generation, verbose=True, output_folder='../models/cartpole', log=True)
 
     env.close()

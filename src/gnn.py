@@ -66,14 +66,34 @@ class GeneticNeuralNetwork(Sequential):
         #
         # self.fit(X_train, y_train, epochs=epochs)
 
+    def save_model(self):
+        # TODO... maybe not
+        return
 
-def mutation(weights, p_mutation=0.9):
+    def load_model(self):
+        # TODO
+        return
+
+
+def mutation(network_weights, p_mutation=0.5):
     # weights is a NxM matrix
-    for i, line in enumerate(weights):
-        for j in range(len(line)):
-            if random.uniform(0, 1) > p_mutation:
-                weights[i][j] *= random.uniform(2, 5)
-    return weights
+    # for i, line in enumerate(weights):
+    #     for j in range(len(line)):
+    #         if random.uniform(0, 1) <= p_mutation:
+    #             weights[i][j] *= random.uniform(2, 5)
+    # return weights
+    # for i, layer_weights in enumerate(network_weights):
+    #     layer_weights = np.array(layer_weights)
+    #     layer_weights[np.random.rand(*layer_weights.shape) < 0.5] *= 2
+    #     network_weights[i] = layer_weights.tolist()
+    # return network_weights
+    for layer_weights in network_weights:
+        for line in layer_weights:
+            for j in range(len(line)):
+                if random.uniform(0, 1) < p_mutation:
+                    line[j] *= random.uniform(1, 5)
+    return network_weights
+
 
 
 # Crossover traits between two Genetic Neural Networks
@@ -102,7 +122,7 @@ def dynamic_crossover(nn1, nn2, p_mutation=0.9):
 
         # After crossover add weights to child
         child_weights.append(nn1_weights[i])
-
+        child_weights = child_weights
     # add a chance for mutation
     child_weights = mutation(child_weights, p_mutation)
 
@@ -168,7 +188,7 @@ if __name__ == '__main__':
 
         # Create n-1 mutations of our model and add to networks
         for i in range(n):
-            networks.append(gnn.dynamic_crossover(gnn))
+            networks.append(dynamic_crossover(gnn))
 
     else:
 
