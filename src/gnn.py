@@ -99,7 +99,9 @@ def mutation(network_weights, p_mutation=0.7):
         for line in layer_weights:
             for j in range(len(line)):
                 if random.uniform(0, 1) < p_mutation:
-                    line[j] *= random.uniform(1, 5)
+                    if np.isnan(line[j]):
+                        print('hi')
+                    line[j] *= random.uniform(-5, 5)
     return network_weights
 
 

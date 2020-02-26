@@ -16,7 +16,7 @@ class CartPoleGNN(GeneticNeuralNetwork):
                 env.render()
             action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
             if np.isnan(action_dist).any():
-                pass
+                break
             else:
                 action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
                 # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = 500
+    baseline_fitness = 200
 
     initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
     # Mutate network until minimum performance

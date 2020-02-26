@@ -6,3 +6,15 @@ Banknote:
 
     One ideia that came up to my mind is that maybe if after a number X of generations we run a Gradient Descent on the
     best of the generation we may have good results
+
+    About the baseline changements:
+    baseline 100: Ancestral Fitness:  276.0  found in  0.7060456275939941 ms
+    baseline 200: Ancestral Fitness:  243.0  found in  1.9227955341339111 ms
+    Sometimes over 200 we find fast a ancestor but normaly it takes time...
+    baseline 300: Ancestral Fitness:  343.0  found in  0.94620680809021 ms
+    baseline 400: Ancestral Fitness:  700.0  found in  1.208829641342163 ms
+    baseline 500: takes too long (little weird tough)
+    increasing the baseline sometimes gives us a boom in one indivudual, but it brokes after (02-26-2020_23-35)
+    when I increased the baseline to 300 we had a really fast convergence (02-26-2020_23-46), but as the generations
+    has continued mutating we got some decreases, and then we converged again to 700 (02-26-2020_23-48)
+
