@@ -16,7 +16,6 @@ class CartPoleGNN(GeneticNeuralNetwork):
                 env.render()
             action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
             if np.isnan(action_dist).any():
-                print(action_dist)
                 pass
             else:
                 action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
@@ -67,15 +66,16 @@ if __name__ == '__main__':
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = 300
+    baseline_fitness = 500
 
     initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
     # Mutate network until minimum performance
+    t0 = time()
     initial_fitness = 0
     while initial_fitness < baseline_fitness:
         initial_fitness = initial_network.run_single(env)
         initial_network = mutate_network(initial_network, 0.8)
-    print('Ancestral Fitness: ', initial_fitness)
+    print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
 
     p = Population(initial_network,
                    POPULATION_SIZE,
