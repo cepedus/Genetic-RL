@@ -3,6 +3,7 @@ import copy
 from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network
 from population_gnn import Population
 import numpy as np
+from time import time
 
 
 class CartPoleGNN(GeneticNeuralNetwork):
@@ -14,12 +15,16 @@ class CartPoleGNN(GeneticNeuralNetwork):
             if render:
                 env.render()
             action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
-            action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
-            # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
-            obs, reward, done, _ = env.step(round(action.item()))
-            fitness += reward
-            if done:
-                break
+            if np.isnan(action_dist).any():
+                print(action_dist)
+                pass
+            else:
+                action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
+                # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
+                obs, reward, done, _ = env.step(round(action.item()))
+                fitness += reward
+                if done:
+                    break
         self.fitness = fitness
         return fitness
 
@@ -27,7 +32,7 @@ class CartPoleGNN(GeneticNeuralNetwork):
 def run_generation(env, old_population, new_population, p_mutation):
     for i in range(0, len(old_population) - 1, 2):
         # Selection
-        parent1, parent2 = ranking_pick(old_population)
+        parent1, parent2 = random_pick(old_population)
 
         # Crossover and Mutation
         child1 = dynamic_crossover(parent1, parent2, p_mutation)
@@ -53,23 +58,25 @@ def run_generation(env, old_population, new_population, p_mutation):
 if __name__ == '__main__':
     env = gym.make('CartPole-v1')
     env.seed(123)
+    np.random.seed(int(time() * 1e9) % 4294967296)
+    env._max_episode_steps = 700
 
-    POPULATION_SIZE = 10
+    POPULATION_SIZE = 6
     MAX_GENERATION = 20
     MUTATION_RATE = 0.7
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = 100
+    baseline_fitness = 300
 
     initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
-
     # Mutate network until minimum performance
     initial_fitness = 0
     while initial_fitness < baseline_fitness:
         initial_fitness = initial_network.run_single(env)
-        initial_network = mutate_network(initial_network, 0.9)
+        initial_network = mutate_network(initial_network, 0.8)
     print('Ancestral Fitness: ', initial_fitness)
+
     p = Population(initial_network,
                    POPULATION_SIZE,
                    MAX_GENERATION,
