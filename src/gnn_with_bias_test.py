@@ -1,14 +1,18 @@
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
+
+
 import gym
 import copy
-from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network
+from gnn_with_bias import GNN_bias, random_pick, ranking_pick, dynamic_crossover, mutate_network
 from population_gnn import Population
 import numpy as np
 from time import time
 
-import os
 
 
-class CartPoleGNN(GeneticNeuralNetwork):
+class CartPoleGNN(GNN_bias):
 
     def run_single(self, env, render=False):
         obs = env.reset()
@@ -62,18 +66,21 @@ if __name__ == '__main__':
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
 
-    POPULATION_SIZE = 30
+    POPULATION_SIZE = 20
     MAX_GENERATION = 20
-    MUTATION_RATE = 0.5
+    MUTATION_RATE = 0.8
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = 200
+    baseline_fitness = 100
 
     initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
+
+    print('made gnn')
     # Mutate network until minimum performance
     t0 = time()
     initial_fitness = 0
+    print('mutating GNN for baseline fitness', baseline_fitness)
     while initial_fitness < baseline_fitness:
         initial_fitness = initial_network.run_single(env)
         initial_network = mutate_network(initial_network, 0.8)

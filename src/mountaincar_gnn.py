@@ -57,7 +57,7 @@ def run_generation(env, old_population, new_population, p_mutation):
 
 
 if __name__ == '__main__':
-    env = gym.make('CartPole-v1')
+    env = gym.make('MountainCar-v0')
     env.seed(123)
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
@@ -85,7 +85,7 @@ if __name__ == '__main__':
                    MUTATION_RATE)
     # Folder name for good ol' Windows
     dirname = os.path.dirname(__file__)
-    out_folder = filename = os.path.join(dirname, '../models/cartpole/')
+    out_folder = filename = os.path.join(dirname, '../models/mountaincar/')
     
     p.run(env, run_generation, verbose=True, output_folder=out_folder, log=True, render=True)
 
