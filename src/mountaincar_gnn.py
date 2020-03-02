@@ -20,7 +20,7 @@ class MountainCarGNN(GeneticNeuralNetwork):
             if np.isnan(action_dist).any():
                 break
             else:
-                action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
+                action = np.random.choice(np.arange(env.action_space.n), p=action_dist)
                 # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
                 obs, reward, done, _ = env.step(round(action.item()))
                 

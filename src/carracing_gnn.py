@@ -8,7 +8,7 @@ from time import time
 import os
 
 
-class CartPoleGNN(GeneticNeuralNetwork):
+class CarRacingGNN(GeneticNeuralNetwork):
 
     def run_single(self, env, render=False):
         obs = env.reset()
@@ -16,13 +16,11 @@ class CartPoleGNN(GeneticNeuralNetwork):
         while True:
             if render:
                 env.render()
-            action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
-            if np.isnan(action_dist).any():
+            action = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
+            if np.isnan(action).any():
                 break
             else:
-                action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
-                # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
-                obs, reward, done, _ = env.step(round(action.item()))
+                obs, reward, done, _ = env.step(action)
                 fitness += reward
                 if done:
                     break
@@ -40,8 +38,8 @@ def run_generation(env, old_population, new_population, p_mutation):
         child2 = dynamic_crossover(parent1, parent2, p_mutation)
 
         # Inherit casting TODO: Bad practice... Do it properly
-        child1.__class__ = CartPoleGNN
-        child2.__class__ = CartPoleGNN
+        child1.__class__ = CarRacingGNN
+        child2.__class__ = CarRacingGNN
 
         # Run childs
         child1.run_single(env)
@@ -57,37 +55,40 @@ def run_generation(env, old_population, new_population, p_mutation):
 
 
 if __name__ == '__main__':
-    env = gym.make('CartPole-v1')
+    env = gym.make('CarRacing-v0')
     env.seed(123)
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
+    discrete = (type(env.action_space) == gym.spaces.discrete.Discrete)
 
-    POPULATION_SIZE = 10
+    POPULATION_SIZE = 4
     MAX_GENERATION = 2
-    MUTATION_RATE = 0.5
-    obs = env.reset()
-    layers_shapes = [obs.shape[0], 4, env.action_space.n]
+    MUTATION_RATE = 0.8
+    obs = env.reset().reshape(-1,)
+    output_shape = env.action_space.n if discrete else env.action_space.shape
+    layers_shapes = [obs.shape[0], 6, output_shape[0]]
     dropout_rate = 0.1
-    baseline_fitness = 200
+    baseline_fitness = 0
 
-    # Folder name for good ol' Windows
-    dirname = os.path.dirname(__file__)
-    out_folder = filename = os.path.join(dirname, '../models/cartpole/')
+    initial_network = CarRacingGNN(layers_shapes, dropout=dropout_rate, discrete=discrete)
 
-    initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
-    #initial_network = CartPoleGNN.load_model(out_folder + '03-02-2020_14-43', CartPoleGNN)
     # Mutate network until minimum performance
     t0 = time()
-    initial_fitness = 0
+    initial_fitness = initial_network.run_single(env)
     while initial_fitness < baseline_fitness:
         initial_network = mutate_network(initial_network, 0.8)
         initial_fitness = initial_network.run_single(env)
+        print(initial_fitness)
     print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
 
     p = Population(initial_network,
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
+
+    # Folder name for good ol' Windows
+    dirname = os.path.dirname(__file__)
+    out_folder = filename = os.path.join(dirname, '../models/carracing/')
 
     p.run(env, run_generation, verbose=True, output_folder=out_folder, log=True, render=True)
 

@@ -20,7 +20,7 @@ class LunarLanderGNN(GeneticNeuralNetwork):
             if np.isnan(action_dist).any():
                 break
             else:
-                action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
+                action = np.random.choice(np.arange(env.action_space.n), p=action_dist)
                 # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
                 obs, reward, done, _ = env.step(round(action.item()))
                 fitness += reward
@@ -62,25 +62,25 @@ if __name__ == '__main__':
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
 
-    POPULATION_SIZE = 30
+    POPULATION_SIZE = 6  # must be even
     MAX_GENERATION = 20
-    MUTATION_RATE = 0.8
+    MUTATION_RATE = 0.7
     obs = env.reset()
-    layers_shapes = [obs.shape[0], 10, env.action_space.n]
+    layers_shapes = [obs.shape[0], 32, 32, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = -100
+    baseline_fitness = -50
 
     initial_network = LunarLanderGNN(layers_shapes, dropout=dropout_rate)
     print('created GNN, looking for ancestral fitness')
     # Mutate network until minimum performance
     t0 = time()
-    initial_fitness = -1000
+    initial_fitness = initial_network.run_single(env)
     while initial_fitness < baseline_fitness:
         initial_network = mutate_network(initial_network, MUTATION_RATE)
         initial_fitness = initial_network.run_single(env)
         print(initial_fitness)
     print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
-
+    initial_network.run_single(env, render=True)
     p = Population(initial_network,
                    POPULATION_SIZE,
                    MAX_GENERATION,
