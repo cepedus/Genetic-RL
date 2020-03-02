@@ -16,7 +16,8 @@ class Population:
         self.new_population = []
 
 #    @timing
-    def run(self, env, run_generation: Callable, verbose=False, log=False, output_folder=None, render=True):
+    def run(self, env, run_generation: Callable, verbose=False, log=False, output_folder=None, render=True, save=False):
+        best_of_all = None
         for i in range(self.max_generation):
             [p.run_single(env) for p in self.old_population]
             self.new_population = [None for _ in range(self.pop_size)]
@@ -32,13 +33,18 @@ class Population:
                 self.show_stats(i)
             if render:
                 fitnesses = [p.fitness for p in self.new_population]
-                best_from_population = self.new_population[fitnesses.index(max(fitnesses))]
-                best_from_population.run_single(env, render=True)
-
+                best_from_generation = self.new_population[fitnesses.index(max(fitnesses))]
+                best_from_generation.run_single(env, render=True)
+                if best_of_all:
+                    if best_from_generation.fitness > best_of_all.fitness:
+                        best_of_all = best_from_generation
+                else:
+                    best_of_all = best_from_generation
 
             self.old_population = copy(self.new_population)
 
-        # TODO: save model  # import pickle / joblib
+        if save:
+            best_of_all.save_model(output_folder)  # TODO: save model  # import pickle / joblib
 
     def save_logs(self, n_gen, output_folder):
         """

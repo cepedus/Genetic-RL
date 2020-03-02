@@ -12,7 +12,8 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-
+from datetime import datetime
+from os import path
 
 class GeneticNeuralNetwork(Sequential):
     # Constructor
@@ -74,13 +75,37 @@ class GeneticNeuralNetwork(Sequential):
         #
         # self.fit(X_train, y_train, epochs=epochs)
 
-    def save_model(self):
-        # TODO... maybe not
+    def save_model(self, output_folder):
+        date = datetime.now().strftime('%m-%d-%Y_%H-%M')
+        file_name = path.join(output_folder, date)
+        # Save Weights
+        self.save_weights(file_name + '-model.h5')
+
+        # Save Layers shape and dropout
+        np.save(file_name + '-parameters.npy', np.asarray([self.layers_shapes, self.dropout]))
         return
 
-    def load_model(self):
-        # TODO
-        return
+    @staticmethod
+    def load_model(model_signature, Class):
+        '''
+
+        :param model_signature: The signature of the model, by default it is the date '%m-%d-%Y_%H-%M'
+        :param Class: Must be a GeneticNeuralNetwork (or its heritages)
+        :return: a GNN with the weights and paremeters imported
+        '''
+        # Load layers_shape
+        parameters = np.load(model_signature+'-parameters.npy')
+        layers_shapes = parameters[0]
+        dropout = parameters[1]
+        print(layers_shapes)
+        print(dropout)
+
+        #init a GNN
+        gnn = Class(layers_shapes, dropout=dropout)
+
+        # Load weights
+        gnn.load_weights(model_signature + '-model.h5')
+        return gnn
 
 
 def mutation(network_weights, p_mutation=0.7):
