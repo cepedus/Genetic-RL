@@ -20,7 +20,7 @@ class CartPoleGNN(GeneticNeuralNetwork):
             if np.isnan(action_dist).any():
                 break
             else:
-                action = np.random.choice(np.arange(env.action_space.n), p=action_dist)
+                action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
                 # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
                 obs, reward, done, _ = env.step(round(action.item()))
                 fitness += reward
@@ -62,13 +62,13 @@ if __name__ == '__main__':
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
 
-    POPULATION_SIZE = 6
-    MAX_GENERATION = 10
-    MUTATION_RATE = 0.6
+    POPULATION_SIZE = 10
+    MAX_GENERATION = 2
+    MUTATION_RATE = 0.5
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = 400
+    baseline_fitness = 200
 
     # Folder name for good ol' Windows
     dirname = os.path.dirname(__file__)
@@ -78,11 +78,10 @@ if __name__ == '__main__':
     #initial_network = CartPoleGNN.load_model(out_folder + '03-02-2020_14-43', CartPoleGNN)
     # Mutate network until minimum performance
     t0 = time()
-    initial_fitness = initial_network.run_single(env)
+    initial_fitness = 0
     while initial_fitness < baseline_fitness:
         initial_network = mutate_network(initial_network, 0.8)
         initial_fitness = initial_network.run_single(env)
-    initial_network.run_single(env, render=True)
     print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
 
     p = Population(initial_network,
