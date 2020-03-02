@@ -1,3 +1,5 @@
 .idea/
 src/__pycache__/
 .vscode/
+models/cartpole/*.h5
+models/cartpole/*.npy
