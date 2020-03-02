@@ -185,10 +185,18 @@ def dynamic_crossover(nn1, nn2, p_mutation=0.7):
 
 
 def random_pick(population):
-    total_fitness = np.sum([gnn.fitness for gnn in population])
-    selection_probabilities = [gnn.fitness / total_fitness for gnn in population]
+    fitnesses = np.array([gnn.fitness for gnn in population])
+    fitnesses_abs = np.array([np.abs(gnn.fitness) for gnn in population])
+    fitnesses = fitnesses/np.max(fitnesses_abs)
+
+    selection_probabilities = np.exp(fitnesses)/sum(np.exp(fitnesses))
+
+    #total_fitness = np.sum([gnn.fitness for gnn in population])
+    #selection_probabilities = [gnn.fitness / total_fitness for gnn in population]
     pick_1 = np.random.choice(len(population), p=selection_probabilities)
-    pick_2 = np.random.choice(len(population), p=selection_probabilities)
+    pick_2 = pick_1
+    while pick_2 == pick_1:
+        pick_2 = np.random.choice(len(population), p=selection_probabilities)
     return population[pick_1], population[pick_2]
 
 
