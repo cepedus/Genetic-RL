@@ -23,6 +23,14 @@ class CartPoleGNN(GeneticNeuralNetwork):
                 action = np.where(action_dist == np.random.choice(action_dist, p=action_dist))[0][0]
                 # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
                 obs, reward, done, _ = env.step(round(action.item()))
+                
+                if obs[0] > -0.2:
+                    reward = 1
+                if obs[0] > 0.0:
+                    reward = 2
+                if obs[0] > 0.2:
+                    reward = 3
+
                 fitness += reward
                 if done:
                     break
@@ -33,7 +41,7 @@ class CartPoleGNN(GeneticNeuralNetwork):
 def run_generation(env, old_population, new_population, p_mutation):
     for i in range(0, len(old_population) - 1, 2):
         # Selection
-        parent1, parent2 = random_pick(old_population)
+        parent1, parent2 = ranking_pick(old_population)
 
         # Crossover and Mutation
         child1 = dynamic_crossover(parent1, parent2, p_mutation)
@@ -62,30 +70,40 @@ if __name__ == '__main__':
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
 
-    POPULATION_SIZE = 30
+    POPULATION_SIZE = 20
     MAX_GENERATION = 20
-    MUTATION_RATE = 0.5
+    MUTATION_RATE = 0.8
     obs = env.reset()
-    layers_shapes = [obs.shape[0], 4, env.action_space.n]
+    layers_shapes = [obs.shape[0], 10, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = 200
+    baseline_fitness = -100
 
     initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
-    # Mutate network until minimum performance
+
+    # print(obs.shape)
+    # print(env.action_space.n)
+    # print(initial_network.get_weights())
+    # # # Mutate network until minimum performance
+    print('created GNN, looking for ancestral fitness')
     t0 = time()
-    initial_fitness = 0
+    initial_fitness = -1000
     while initial_fitness < baseline_fitness:
-        initial_fitness = initial_network.run_single(env)
         initial_network = mutate_network(initial_network, 0.8)
+        initial_fitness = initial_network.run_single(env)
+        print(initial_fitness)
     print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
 
     p = Population(initial_network,
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
+
+    print('created population')
     # Folder name for good ol' Windows
     dirname = os.path.dirname(__file__)
     out_folder = filename = os.path.join(dirname, '../models/mountaincar/')
+
+    print('running')
     
     p.run(env, run_generation, verbose=True, output_folder=out_folder, log=True, render=True)
 
