@@ -17,7 +17,7 @@ from os import path
 
 class GeneticNeuralNetwork(Sequential):
     # Constructor
-    def __init__(self, layers_shapes, child_weights=None, dropout=0):
+    def __init__(self, layers_shapes, child_weights=None, dropout=0, discrete=True):
         # Initialize Sequential Model Super Class
         super().__init__()
 
@@ -34,7 +34,10 @@ class GeneticNeuralNetwork(Sequential):
             for shape in layers_shapes[2:-1]:
                 layers.append(Dense(shape, activation='sigmoid'))
                 layers.append(Dropout(dropout))
-            layers.append(Dense(layers_shapes[-1], activation='softmax'))
+            if discrete:
+                layers.append(Dense(layers_shapes[-1], activation='softmax'))
+            else:
+                layers.append(Dense(layers_shapes[-1]))  # No activation: ]-inf, +inf[
             layers.append(Dropout(dropout))
         # If weights are provided set them within the layers
         else:
@@ -46,8 +49,12 @@ class GeneticNeuralNetwork(Sequential):
                 layers.append(Dense(shape, activation='sigmoid',
                                     weights=[child_weights[i + 1], np.zeros(shape)]))
                 layers.append(Dropout(dropout))
-            layers.append(Dense(layers_shapes[-1], activation='softmax',
+            if discrete:
+                layers.append(Dense(layers_shapes[-1], activation='softmax',
                                 weights=[child_weights[-1], np.zeros(layers_shapes[-1])]))
+            else:  # Continous space -> No activation
+                layers.append(Dense(layers_shapes[-1],
+                                    weights=[child_weights[-1], np.zeros(layers_shapes[-1])]))
             layers.append(Dropout(dropout))
         for layer in layers:
             self.add(layer)
