@@ -8,7 +8,7 @@ from time import time
 import os
 
 
-class CartPoleGNN(GeneticNeuralNetwork):
+class LunarLanderGNN(GeneticNeuralNetwork):
 
     def run_single(self, env, render=False):
         obs = env.reset()
@@ -40,8 +40,8 @@ def run_generation(env, old_population, new_population, p_mutation):
         child2 = dynamic_crossover(parent1, parent2, p_mutation)
 
         # Inherit casting TODO: Bad practice... Do it properly
-        child1.__class__ = CartPoleGNN
-        child2.__class__ = CartPoleGNN
+        child1.__class__ = LunarLanderGNN
+        child2.__class__ = LunarLanderGNN
 
         # Run childs
         child1.run_single(env)
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     dropout_rate = 0.1
     baseline_fitness = -100
 
-    initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
+    initial_network = LunarLanderGNN(layers_shapes, dropout=dropout_rate)
     print('created GNN, looking for ancestral fitness')
     # Mutate network until minimum performance
     t0 = time()
