@@ -8,7 +8,7 @@ from time import time
 import os
 
 
-class CartPoleGNN(GeneticNeuralNetwork):
+class MountainCarGNN(GeneticNeuralNetwork):
 
     def run_single(self, env, render=False):
         obs = env.reset()
@@ -48,8 +48,8 @@ def run_generation(env, old_population, new_population, p_mutation):
         child2 = dynamic_crossover(parent1, parent2, p_mutation)
 
         # Inherit casting TODO: Bad practice... Do it properly
-        child1.__class__ = CartPoleGNN
-        child2.__class__ = CartPoleGNN
+        child1.__class__ = MountainCarGNN
+        child2.__class__ = MountainCarGNN
 
         # Run childs
         child1.run_single(env)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     dropout_rate = 0.1
     baseline_fitness = -100
 
-    initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)
+    initial_network = MountainCarGNN(layers_shapes, dropout=dropout_rate)
 
     # print(obs.shape)
     # print(env.action_space.n)
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         initial_network = mutate_network(initial_network, 0.8)
         initial_fitness = initial_network.run_single(env)
         print(initial_fitness)
-    print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
+    print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 's')
 
     p = Population(initial_network,
                    POPULATION_SIZE,
