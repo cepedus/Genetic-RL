@@ -4,6 +4,7 @@ from gnn import statistics
 from datetime import datetime
 from getpass import getuser
 from gnn import mutate_network
+import os
 
 
 class Population:
@@ -48,6 +49,8 @@ class Population:
         username = getuser()
         mean, min, max = statistics(self.new_population)
         stats = f'{date},{n_gen},{mean},{min},{max}\n'
+        if not os.path.exists(output_folder):
+            os.mkdir(output_folder)
         with open(output_folder + username + '-' + file_name, 'a') as f:
             f.write(stats)
 
