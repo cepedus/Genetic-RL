@@ -15,6 +15,7 @@ from tqdm import tqdm
 from datetime import datetime
 from os import path
 
+
 class GeneticNeuralNetwork(Sequential):
     # Constructor
     def __init__(self, layers_shapes, child_weights=None, dropout=0, discrete=True):
@@ -34,11 +35,7 @@ class GeneticNeuralNetwork(Sequential):
             for shape in layers_shapes[2:-1]:
                 layers.append(Dense(shape, activation='sigmoid'))
                 layers.append(Dropout(dropout))
-            if discrete:
-                layers.append(Dense(layers_shapes[-1], activation='softmax'))
-            else:
-                layers.append(Dense(layers_shapes[-1]))  # No activation: ]-inf, +inf[
-            layers.append(Dropout(dropout))
+            layers.append(Dense(layers_shapes[-1], activation=('softmax' if discrete else None)))
         # If weights are provided set them within the layers
         else:
             # Set weights within the layers
@@ -49,13 +46,8 @@ class GeneticNeuralNetwork(Sequential):
                 layers.append(Dense(shape, activation='sigmoid',
                                     weights=[child_weights[i + 1], np.zeros(shape)]))
                 layers.append(Dropout(dropout))
-            if discrete:
-                layers.append(Dense(layers_shapes[-1], activation='softmax',
+            layers.append(Dense(layers_shapes[-1], activation=('softmax' if discrete else None),
                                 weights=[child_weights[-1], np.zeros(layers_shapes[-1])]))
-            else:  # Continous space -> No activation
-                layers.append(Dense(layers_shapes[-1],
-                                    weights=[child_weights[-1], np.zeros(layers_shapes[-1])]))
-            layers.append(Dropout(dropout))
         for layer in layers:
             self.add(layer)
 
@@ -101,13 +93,13 @@ class GeneticNeuralNetwork(Sequential):
         :return: a GNN with the weights and paremeters imported
         '''
         # Load layers_shape
-        parameters = np.load(model_signature+'-parameters.npy')
+        parameters = np.load(model_signature + '-parameters.npy')
         layers_shapes = parameters[0]
         dropout = parameters[1]
         print(layers_shapes)
         print(dropout)
 
-        #init a GNN
+        # init a GNN
         gnn = Class(layers_shapes, dropout=dropout)
 
         # Load weights
@@ -187,12 +179,12 @@ def dynamic_crossover(nn1, nn2, p_mutation=0.7):
 def random_pick(population):
     fitnesses = np.array([gnn.fitness for gnn in population])
     fitnesses_abs = np.array([np.abs(gnn.fitness) for gnn in population])
-    fitnesses = fitnesses/np.max(fitnesses_abs)
+    fitnesses = fitnesses / np.max(fitnesses_abs)
 
-    selection_probabilities = np.exp(fitnesses)/sum(np.exp(fitnesses))
+    selection_probabilities = np.exp(fitnesses) / sum(np.exp(fitnesses))
 
-    #total_fitness = np.sum([gnn.fitness for gnn in population])
-    #selection_probabilities = [gnn.fitness / total_fitness for gnn in population]
+    # total_fitness = np.sum([gnn.fitness for gnn in population])
+    # selection_probabilities = [gnn.fitness / total_fitness for gnn in population]
     pick_1 = np.random.choice(len(population), p=selection_probabilities)
     pick_2 = pick_1
     while pick_2 == pick_1:
