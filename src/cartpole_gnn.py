@@ -1,5 +1,5 @@
 import gym
-from gnn import GeneticNeuralNetwork, mutate_network, run_generation
+from gnn import GeneticNeuralNetwork, mutate_network, run_generation, baseline_init
 from population_gnn import Population
 import numpy as np
 from time import time
@@ -30,18 +30,11 @@ if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
     out_folder = filename = os.path.join(dirname, '../models/cartpole/')
 
-    initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)   # Instantiate
     # If you want to load a pre-existing model:
     # initial_network = CartPoleGNN.load_model(out_folder + '03-02-2020_14-43')
-
     # Mutate network until minimum performance
-    t0 = time()
-    initial_fitness = initial_network.run_single(env)    # Get the initial fitness
-    while initial_fitness < baseline_fitness:            # Mutate network until one individual achieves the baseline
-        initial_network = mutate_network(initial_network, 0.8)
-        initial_fitness = initial_network.run_single(env)
-    print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
-    initial_network.run_single(env, render=True)        # Show simulation for this optimized initialization
+    initial_network = baseline_init(CartPoleGNN(layers_shapes, dropout=dropout_rate),
+                                    env, baseline_fitness, render=True)
 
     p = Population(initial_network,                     # Define our population
                    POPULATION_SIZE,

@@ -1,5 +1,5 @@
 import gym
-from gnn import GeneticNeuralNetwork, mutate_network, run_generation
+from gnn import GeneticNeuralNetwork, mutate_network, run_generation, baseline_init
 from population_gnn import Population
 import numpy as np
 from time import time
@@ -49,20 +49,12 @@ if __name__ == '__main__':
     obs = env.reset()
     layers_shapes = [obs.shape[0], 10, env.action_space.n]
     dropout_rate = 0.1
-    baseline_fitness = -100
-
-    initial_network = MountainCarGNN(layers_shapes, dropout=dropout_rate)
+    baseline_fitness = -50
 
     # # # Mutate network until minimum performance
-    print('created GNN, looking for ancestral fitness')
-    t0 = time()
-    initial_fitness = initial_network.run_single(env)
-    while initial_fitness < baseline_fitness:
-        initial_network = mutate_network(initial_network, 0.8)
-        initial_fitness = initial_network.run_single(env)
-        print(initial_fitness)
-    print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 's')
-    initial_network.run_single(env, render=False)
+    print('creating GNN, fulfilling minimum baseline')
+    initial_network = baseline_init(MountainCarGNN(layers_shapes, dropout=dropout_rate),
+                                    env, baseline_fitness, render=True)
 
     p = Population(initial_network,
                    POPULATION_SIZE,
@@ -76,6 +68,6 @@ if __name__ == '__main__':
 
     print('running')
     
-    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=False)
+    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=True)
 
     env.close()

@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from datetime import datetime
+from time import time
 from os import path
 
 
@@ -225,6 +226,17 @@ def run_generation(env, old_population, new_population, p_mutation, random_selec
         else:
             new_population[i] = parent1
             new_population[i + 1] = parent2
+
+
+def baseline_init(agent, env, baseline, render=True):
+    t0 = time()
+    initial_fitness = agent.run_single(env)  # Get the initial fitness
+    while initial_fitness < baseline:  # Mutate network until one individual achieves the baseline
+        agent = mutate_network(agent, 0.8)
+        initial_fitness = agent.run_single(env)
+    print('Ancestral Fitness: ', initial_fitness, ' found in ', time() - t0, 'ms')
+    agent.run_single(env, render=render)  # Show simulation for this optimized initialization
+    return agent
 
 
 def statistics(population):
