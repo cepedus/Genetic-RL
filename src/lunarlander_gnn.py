@@ -26,9 +26,10 @@ if __name__ == '__main__':
     baseline_fitness = -50
 
     print('creating GNN fulfilling minimum baseline fitness')
+    t0 = time()
     # Mutate network until minimum performance
     initial_network = baseline_init(LunarLanderGNN(layers_shapes, dropout=dropout_rate),
-                                    env, baseline_fitness, render=True)
+                                    env, baseline_fitness, render=False)
 
     p = Population(initial_network,
                    POPULATION_SIZE,
@@ -38,6 +39,9 @@ if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
     out_folder = filename = os.path.join(dirname, '../models/lunarlander/')
     
-    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=True)
+    p.run(env, run_generation, random_selection=False, verbose=False, output_folder=out_folder, log=True, render=False)
 
     env.close()
+
+    print('done in', time()-t0)
+

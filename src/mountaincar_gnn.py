@@ -44,17 +44,18 @@ if __name__ == '__main__':
     env._max_episode_steps = 700
 
     POPULATION_SIZE = 6
-    MAX_GENERATION = 20
+    MAX_GENERATION = 100
     MUTATION_RATE = 0.8
     obs = env.reset()
     layers_shapes = [obs.shape[0], 10, env.action_space.n]
     dropout_rate = 0.1
     baseline_fitness = -50
 
+    t0 = time()
     # # # Mutate network until minimum performance
     print('creating GNN, fulfilling minimum baseline')
     initial_network = baseline_init(MountainCarGNN(layers_shapes, dropout=dropout_rate),
-                                    env, baseline_fitness, render=True)
+                                    env, baseline_fitness, render=False)
 
     p = Population(initial_network,
                    POPULATION_SIZE,
@@ -68,6 +69,8 @@ if __name__ == '__main__':
 
     print('running')
     
-    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=True)
+    p.run(env, run_generation, random_selection=False, verbose=False, output_folder=out_folder, log=True, render=False)
 
     env.close()
+
+    print('done in', time()-t0)

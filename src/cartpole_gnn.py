@@ -33,14 +33,18 @@ if __name__ == '__main__':
     # If you want to load a pre-existing model:
     # initial_network = CartPoleGNN.load_model(out_folder + '03-02-2020_14-43')
     # Mutate network until minimum performance
+    t0 = time()
     initial_network = baseline_init(CartPoleGNN(layers_shapes, dropout=dropout_rate),
-                                    env, baseline_fitness, render=True)
+                                    env, baseline_fitness, render=False)
 
     p = Population(initial_network,                     # Define our population
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
 
-    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=True)  # Run evolution
+    p.run(env, run_generation, random_selection=False, verbose=False, output_folder=out_folder, log=True, render=False)  # Run evolution
 
     env.close()
+
+    print('done in', time()-t0)
+
