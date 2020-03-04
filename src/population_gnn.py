@@ -1,9 +1,8 @@
 from typing import Callable
-from copy import deepcopy, copy
+from copy import copy
 from gnn import statistics
 from datetime import datetime
 from getpass import getuser
-from gnn import mutate_network
 import os
 
 

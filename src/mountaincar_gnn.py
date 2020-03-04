@@ -1,6 +1,5 @@
 import gym
-import copy
-from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network, run_generation
+from gnn import GeneticNeuralNetwork, mutate_network, run_generation
 from population_gnn import Population
 import numpy as np
 from time import time

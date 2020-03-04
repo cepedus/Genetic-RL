@@ -5,7 +5,7 @@
 # ======= Defining our Genetic Neural Network ======= #
 import random
 
-from keras.models import Sequential, load_model, model_from_json
+from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
