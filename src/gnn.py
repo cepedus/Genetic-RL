@@ -115,7 +115,7 @@ class GeneticNeuralNetwork(Sequential):
         return gnn
 
 
-def mutation(network_weights, p_mutation=0.7):
+def mutation(network_weights, p_mutation=0.7, mutation_rate=5):
     # weights is a NxM matrix
     # for i, line in enumerate(weights):
     #     for j in range(len(line)):
@@ -127,13 +127,14 @@ def mutation(network_weights, p_mutation=0.7):
     #     layer_weights[np.random.rand(*layer_weights.shape) < 0.5] *= 2
     #     network_weights[i] = layer_weights.tolist()
     # return network_weights
+    
     for layer_weights in network_weights:
         for line in layer_weights:
             for j in range(len(line)):
                 if random.uniform(0, 1) < p_mutation:
                     if np.isnan(line[j]):
                         print('hi')
-                    line[j] *= random.uniform(-5, 5)
+                    line[j] *= random.uniform(-mutation_rate, mutation_rate)
     return network_weights
 
 
@@ -151,7 +152,7 @@ def mutate_network(network, p_mutation=0.7):
 
 
 # Crossover traits between two Genetic Neural Networks
-def dynamic_crossover(nn1, nn2, p_mutation=0.7):
+def dynamic_crossover(nn1, nn2, p_mutation=0.7, kind=1, p=0.1):
     # Assert both Neural Networks are of the same format
     assert nn1.layers_shapes == nn2.layers_shapes
     assert nn1.dropout == nn2.dropout
@@ -166,18 +167,32 @@ def dynamic_crossover(nn1, nn2, p_mutation=0.7):
         w = layer_1.get_weights()
         if w:
             nn1_weights.append(w[0])
+
     for layer_2 in nn2.layers:
         w = layer_2.get_weights()
         if w:
             nn2_weights.append(w[0])
 
-    for i in range(0, len(nn1_weights)):
-        for j in range(np.shape(nn1_weights[i])[1] - 1):
-            nn1_weights[i][:, j] = random.choice([nn1_weights[i][:, j], nn2_weights[i][:, j]])
+    if kind == 0:
+        for i in range(0, len(nn1_weights)):
+            for j in range(np.shape(nn1_weights[i])[1] - 1):
+                nn1_weights[i][:, j] = random.choice([nn1_weights[i][:, j], nn2_weights[i][:, j]])
 
-        # After crossover add weights to child
-        child_weights.append(nn1_weights[i])
-        child_weights = child_weights
+            # After crossover add weights to child
+            child_weights.append(nn1_weights[i])
+            child_weights = child_weights
+
+    if kind == 1:
+        for i in range(0, len(nn1_weights)):
+            for j in range(np.shape(nn1_weights[i])[1] - 1):
+                nn1_weights[i][:, j] = random.choice([(nn1_weights[i][:, j]*p + nn2_weights[i][:, j]*(1-p)),
+                                                      (nn1_weights[i][:, j]*(1-p) + nn2_weights[i][:, j]*p)])
+
+            # After crossover add weights to child
+            child_weights.append(nn1_weights[i])
+            child_weights = child_weights
+
+
     # add a chance for mutation
     child_weights = mutation(child_weights, p_mutation)
 
@@ -318,7 +333,7 @@ if __name__ == '__main__':
 
         # log the current generation
         generation += 1
-        print(f'Generation: {generation}')
+        # print(f'Generation: {generation}')
         max_fitness_generation = 0
         # Forward propagate the neural networks to compute a fitness score
         for i, nn in enumerate(networks):
@@ -328,7 +343,7 @@ if __name__ == '__main__':
                 max_fitness_generation = nn.fitness
             # Add to pool after calculating fitness
             pool.append(nn)
-        print(f'Max fitness of this generation: {max_fitness_generation}')
+        # print(f'Max fitness of this generation: {max_fitness_generation}')
         # Clear for propagation of next children
         networks.clear()
 
@@ -348,7 +363,7 @@ if __name__ == '__main__':
                     w = layer.get_weights()
                     if w:
                         optimal_weights.append(w[0])
-                print(f'Max Fitness: {max_fitness}')
+                # print(f'Max Fitness: {max_fitness}')
                 print(optimal_weights)
 
     # Create a Genetic Neural Network with optimal inital weights
@@ -359,4 +374,4 @@ if __name__ == '__main__':
     gnn.save_weights('trained_model.h5')
     # Test the Genetic Neural Network Out of Sample
     y_hat = gnn.predict(X_test).reshape(-1, ).round()
-    print(f'Test Accuracy: {accuracy_score(y_test, y_hat)}')
+    # print(f'Test Accuracy: {accuracy_score(y_test, y_hat)}')
