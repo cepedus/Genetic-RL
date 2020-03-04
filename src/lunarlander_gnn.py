@@ -1,6 +1,8 @@
+from abc import ABC
+
 import gym
 import copy
-from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network
+from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network, run_generation
 from population_gnn import Population
 import numpy as np
 from time import time
@@ -9,51 +11,7 @@ import os
 
 
 class LunarLanderGNN(GeneticNeuralNetwork):
-
-    def run_single(self, env, render=False):
-        obs = env.reset()
-        fitness = 0
-        while True:
-            if render:
-                env.render()
-            action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
-            if np.isnan(action_dist).any():
-                break
-            else:
-                action = np.random.choice(np.arange(env.action_space.n), p=action_dist)
-                # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
-                obs, reward, done, _ = env.step(round(action.item()))
-                fitness += reward
-                if done:
-                    break
-        self.fitness = fitness
-        return fitness
-
-
-def run_generation(env, old_population, new_population, p_mutation):
-    for i in range(0, len(old_population) - 1, 2):
-        # Selection
-        parent1, parent2 = ranking_pick(old_population)
-
-        # Crossover and Mutation
-        child1 = dynamic_crossover(parent1, parent2, p_mutation)
-        child2 = dynamic_crossover(parent1, parent2, p_mutation)
-
-        # Inherit casting TODO: Bad practice... Do it properly
-        child1.__class__ = LunarLanderGNN
-        child2.__class__ = LunarLanderGNN
-
-        # Run childs
-        child1.run_single(env)
-        child2.run_single(env)
-
-        # If children fitness is greater than parents update population
-        if child1.fitness + child2.fitness > parent1.fitness + parent2.fitness:
-            new_population[i] = child1
-            new_population[i + 1] = child2
-        else:
-            new_population[i] = parent1
-            new_population[i + 1] = parent2
+    pass
 
 
 if __name__ == '__main__':
@@ -66,7 +24,7 @@ if __name__ == '__main__':
     MAX_GENERATION = 20
     MUTATION_RATE = 0.7
     obs = env.reset()
-    layers_shapes = [obs.shape[0], 32, 32, env.action_space.n]
+    layers_shapes = [obs.shape[0], 16, env.action_space.n]
     dropout_rate = 0.1
     baseline_fitness = -50
 
@@ -89,6 +47,6 @@ if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
     out_folder = filename = os.path.join(dirname, '../models/lunarlander/')
     
-    p.run(env, run_generation, verbose=True, output_folder=out_folder, log=True, render=True)
+    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=True)
 
     env.close()

@@ -26,6 +26,7 @@ class GeneticNeuralNetwork(Sequential):
         self.layers_shapes = layers_shapes
         self.fitness = 0
         self.dropout = dropout
+        self.discrete = discrete
 
         # If no weights provided randomly generate them
         if child_weights is None:
@@ -61,18 +62,26 @@ class GeneticNeuralNetwork(Sequential):
 
     # Function for foward propagating a row vector of a matrix
     def run_single(self, env, render=False):
-        raise NotImplementedError
-        # # Forward propagation
-        # y_pred = [np.argmax(np.array(y)) for y in self.predict(X_train)]
-        # # Compute fitness score
-        # self.fitness = accuracy_score(y_train, y_pred)
-
-    # Standard Backpropagation
-    def compile_train(self, X_train, y_train, epochs):
-        raise NotImplementedError
-        # self.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-        #
-        # self.fit(X_train, y_train, epochs=epochs)
+        if self.discrete:
+            obs = env.reset()
+            fitness = 0
+            while True:
+                if render:
+                    env.render()
+                action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
+                if np.isnan(action_dist).any():
+                    break
+                else:
+                    action = np.random.choice(np.arange(env.action_space.n), p=action_dist)
+                    # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
+                    obs, reward, done, _ = env.step(round(action.item()))
+                    fitness += reward
+                    if done:
+                        break
+            self.fitness = fitness
+            return fitness
+        else:
+            raise NotImplementedError
 
     def save_model(self, output_folder):
         date = datetime.now().strftime('%m-%d-%Y_%H-%M')
@@ -84,8 +93,8 @@ class GeneticNeuralNetwork(Sequential):
         np.save(file_name + '-parameters.npy', np.asarray([self.layers_shapes, self.dropout]))
         return
 
-    @staticmethod
-    def load_model(model_signature, Class):
+    @classmethod
+    def load_model(cls, model_signature):
         '''
 
         :param model_signature: The signature of the model, by default it is the date '%m-%d-%Y_%H-%M'
@@ -96,11 +105,9 @@ class GeneticNeuralNetwork(Sequential):
         parameters = np.load(model_signature + '-parameters.npy')
         layers_shapes = parameters[0]
         dropout = parameters[1]
-        print(layers_shapes)
-        print(dropout)
 
-        # init a GNN
-        gnn = Class(layers_shapes, dropout=dropout)
+        # init a GNN Inherited Class
+        gnn = cls(layers_shapes, dropout=dropout)
 
         # Load weights
         gnn.load_weights(model_signature + '-model.h5')
@@ -147,6 +154,7 @@ def dynamic_crossover(nn1, nn2, p_mutation=0.7):
     # Assert both Neural Networks are of the same format
     assert nn1.layers_shapes == nn2.layers_shapes
     assert nn1.dropout == nn2.dropout
+    assert nn1.__class__ == nn2.__class__
 
     # Lists for respective weights
     nn1_weights = []
@@ -173,7 +181,7 @@ def dynamic_crossover(nn1, nn2, p_mutation=0.7):
     child_weights = mutation(child_weights, p_mutation)
 
     # Create and return child object
-    return GeneticNeuralNetwork(layers_shapes=nn1.layers_shapes, child_weights=child_weights, dropout=nn1.dropout)
+    return nn1.__class__(layers_shapes=nn1.layers_shapes, child_weights=child_weights, dropout=nn1.dropout)
 
 
 def random_pick(population):
@@ -195,6 +203,28 @@ def random_pick(population):
 def ranking_pick(population):
     sorted_population = sorted(population, key=lambda gnn: gnn.fitness, reverse=True)
     return sorted_population[:2]
+
+
+def run_generation(env, old_population, new_population, p_mutation, random_selection=False):
+    for i in range(0, len(old_population) - 1, 2):
+        # Selection
+        parent1, parent2 = random_pick(old_population) if random_selection else ranking_pick(old_population)
+
+        # Crossover and Mutation
+        child1 = dynamic_crossover(parent1, parent2, p_mutation)
+        child2 = dynamic_crossover(parent1, parent2, p_mutation)
+
+        # Run childs
+        child1.run_single(env)
+        child2.run_single(env)
+
+        # If children fitness is greater than parents update population
+        if child1.fitness + child2.fitness > parent1.fitness + parent2.fitness:
+            new_population[i] = child1
+            new_population[i + 1] = child2
+        else:
+            new_population[i] = parent1
+            new_population[i + 1] = parent2
 
 
 def statistics(population):

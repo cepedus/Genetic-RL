@@ -16,7 +16,8 @@ class Population:
         self.new_population = []
 
 #    @timing
-    def run(self, env, run_generation: Callable, verbose=False, log=False, output_folder=None, render=True, save=False):
+    def run(self, env, run_generation: Callable, random_selection=False,
+            verbose=False, log=False, output_folder=None, render=True, save=False):
         best_of_all = None
         for i in range(self.max_generation):
             [p.run_single(env) for p in self.old_population]
@@ -25,7 +26,8 @@ class Population:
             run_generation(env,
                            self.old_population,
                            self.new_population,
-                           self.p_mutation)
+                           self.p_mutation,
+                           random_selection=random_selection)
 
             if log:
                 self.save_logs(i, output_folder)

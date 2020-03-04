@@ -1,6 +1,6 @@
 import gym
 import copy
-from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network
+from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network, run_generation
 from population_gnn import Population
 import numpy as np
 from time import time
@@ -21,7 +21,7 @@ class MountainCarGNN(GeneticNeuralNetwork):
                 break
             else:
                 action = np.random.choice(np.arange(env.action_space.n), p=action_dist)
-                # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
+                # action = np.argmax(action_dist)  # TODO: Test if taking a random action is better than the most prob
                 obs, reward, done, _ = env.step(round(action.item()))
                 
                 if obs[0] > -0.2:
@@ -38,39 +38,13 @@ class MountainCarGNN(GeneticNeuralNetwork):
         return fitness
 
 
-def run_generation(env, old_population, new_population, p_mutation):
-    for i in range(0, len(old_population) - 1, 2):
-        # Selection
-        parent1, parent2 = ranking_pick(old_population)
-
-        # Crossover and Mutation
-        child1 = dynamic_crossover(parent1, parent2, p_mutation)
-        child2 = dynamic_crossover(parent1, parent2, p_mutation)
-
-        # Inherit casting TODO: Bad practice... Do it properly
-        child1.__class__ = MountainCarGNN
-        child2.__class__ = MountainCarGNN
-
-        # Run childs
-        child1.run_single(env)
-        child2.run_single(env)
-
-        # If children fitness is greater than parents update population
-        if child1.fitness + child2.fitness > parent1.fitness + parent2.fitness:
-            new_population[i] = child1
-            new_population[i + 1] = child2
-        else:
-            new_population[i] = parent1
-            new_population[i + 1] = parent2
-
-
 if __name__ == '__main__':
     env = gym.make('MountainCar-v0')
     env.seed(123)
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
 
-    POPULATION_SIZE = 20
+    POPULATION_SIZE = 6
     MAX_GENERATION = 20
     MUTATION_RATE = 0.8
     obs = env.reset()
@@ -80,18 +54,16 @@ if __name__ == '__main__':
 
     initial_network = MountainCarGNN(layers_shapes, dropout=dropout_rate)
 
-    # print(obs.shape)
-    # print(env.action_space.n)
-    # print(initial_network.get_weights())
     # # # Mutate network until minimum performance
     print('created GNN, looking for ancestral fitness')
     t0 = time()
-    initial_fitness = -1000
+    initial_fitness = initial_network.run_single(env)
     while initial_fitness < baseline_fitness:
         initial_network = mutate_network(initial_network, 0.8)
         initial_fitness = initial_network.run_single(env)
         print(initial_fitness)
     print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 's')
+    initial_network.run_single(env, render=False)
 
     p = Population(initial_network,
                    POPULATION_SIZE,
@@ -105,6 +77,6 @@ if __name__ == '__main__':
 
     print('running')
     
-    p.run(env, run_generation, verbose=True, output_folder=out_folder, log=True, render=True)
+    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=False)
 
     env.close()

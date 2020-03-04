@@ -1,6 +1,6 @@
 import gym
 import copy
-from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network
+from gnn import GeneticNeuralNetwork, random_pick, ranking_pick, dynamic_crossover, mutate_network, run_generation
 from population_gnn import Population
 import numpy as np
 from time import time
@@ -9,51 +9,7 @@ import os
 
 
 class CartPoleGNN(GeneticNeuralNetwork):
-
-    def run_single(self, env, render=False):
-        obs = env.reset()
-        fitness = 0
-        while True:
-            if render:
-                env.render()
-            action_dist = self.predict(np.array([np.array(obs).reshape(-1, )]))[0]
-            if np.isnan(action_dist).any():
-                break
-            else:
-                action = np.random.choice(np.arange(env.action_space.n), p=action_dist)
-                # action = np.argmax(action_dist)  # ############################ TODO: take random action from distribution
-                obs, reward, done, _ = env.step(round(action.item()))
-                fitness += reward
-                if done:
-                    break
-        self.fitness = fitness
-        return fitness
-
-
-def run_generation(env, old_population, new_population, p_mutation):
-    for i in range(0, len(old_population) - 1, 2):
-        # Selection
-        parent1, parent2 = random_pick(old_population)
-
-        # Crossover and Mutation
-        child1 = dynamic_crossover(parent1, parent2, p_mutation)
-        child2 = dynamic_crossover(parent1, parent2, p_mutation)
-
-        # Inherit casting TODO: Bad practice... Do it properly
-        child1.__class__ = CartPoleGNN
-        child2.__class__ = CartPoleGNN
-
-        # Run childs
-        child1.run_single(env)
-        child2.run_single(env)
-
-        # If children fitness is greater than parents update population
-        if child1.fitness + child2.fitness > parent1.fitness + parent2.fitness:
-            new_population[i] = child1
-            new_population[i + 1] = child2
-        else:
-            new_population[i] = parent1
-            new_population[i + 1] = parent2
+    pass
 
 
 if __name__ == '__main__':
@@ -69,13 +25,15 @@ if __name__ == '__main__':
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]  # Format of the neural network
     dropout_rate = 0.1   # Chance of dropout
-    baseline_fitness = 400   # Minimum baseline for the optimized random initialization
+    baseline_fitness = 200   # Minimum baseline for the optimized random initialization
 
     # Folder name for good ol' Windows
     dirname = os.path.dirname(__file__)
     out_folder = filename = os.path.join(dirname, '../models/cartpole/')
 
     initial_network = CartPoleGNN(layers_shapes, dropout=dropout_rate)   # Instantiate
+    # If you want to load a pre-existing model:
+    # initial_network = CartPoleGNN.load_model(out_folder + '03-02-2020_14-43')
 
     # Mutate network until minimum performance
     t0 = time()
@@ -83,14 +41,14 @@ if __name__ == '__main__':
     while initial_fitness < baseline_fitness:            # Mutate network until one individual achieves the baseline
         initial_network = mutate_network(initial_network, 0.8)
         initial_fitness = initial_network.run_single(env)
-    initial_network.run_single(env, render=True)        # Show simulation for this optimized initialization
     print('Ancestral Fitness: ', initial_fitness, ' found in ', time()-t0, 'ms')
+    initial_network.run_single(env, render=True)        # Show simulation for this optimized initialization
 
     p = Population(initial_network,                     # Define our population
                    POPULATION_SIZE,
                    MAX_GENERATION,
                    MUTATION_RATE)
 
-    p.run(env, run_generation, verbose=True, output_folder=out_folder, log=True, render=True)  # Run evolution
+    p.run(env, run_generation, random_selection=False, verbose=True, output_folder=out_folder, log=True, render=True)  # Run evolution
 
     env.close()
