@@ -152,7 +152,7 @@ def mutate_network(network, p_mutation=0.7):
 
 
 # Crossover traits between two Genetic Neural Networks
-def dynamic_crossover(nn1, nn2, p_mutation=0.7, kind=1, p=0.1):
+def dynamic_crossover(nn1, nn2, p_mutation=0.7, kind=0, p=0.1):
     # Assert both Neural Networks are of the same format
     assert nn1.layers_shapes == nn2.layers_shapes
     assert nn1.dropout == nn2.dropout
