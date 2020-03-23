@@ -19,7 +19,7 @@ if __name__ == '__main__':
     env._max_episode_steps = 700
 
     POPULATION_SIZE = 6   # Number of individuals per generation
-    MAX_GENERATION = 10   # Max number of generations
+    MAX_GENERATION = 100   # Max number of generations
     MUTATION_RATE = 0.6   # Mutation chance
     obs = env.reset()
     layers_shapes = [obs.shape[0], 4, env.action_space.n]  # Format of the neural network

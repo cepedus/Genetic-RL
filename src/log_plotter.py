@@ -3,7 +3,7 @@ import pandas as pd
 from getpass import getuser
 import matplotlib.pyplot as plt
 
-FOLDER = 'mountaincar'
+FOLDER = 'lunarlander'
 
 
 

@@ -43,9 +43,9 @@ if __name__ == '__main__':
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
 
-    POPULATION_SIZE = 6
+    POPULATION_SIZE = 10
     MAX_GENERATION = 100
-    MUTATION_RATE = 0.8
+    MUTATION_RATE = 0.6
     obs = env.reset()
     layers_shapes = [obs.shape[0], 10, env.action_space.n]
     dropout_rate = 0.1
