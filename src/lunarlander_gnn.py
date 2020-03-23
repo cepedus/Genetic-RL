@@ -17,11 +17,11 @@ if __name__ == '__main__':
     np.random.seed(int(time() * 1e9) % 4294967296)
     env._max_episode_steps = 700
 
-    POPULATION_SIZE = 6  # must be even
-    MAX_GENERATION = 20
-    MUTATION_RATE = 0.7
+    POPULATION_SIZE = 12  # must be even
+    MAX_GENERATION = 100
+    MUTATION_RATE = 0.6
     obs = env.reset()
-    layers_shapes = [obs.shape[0], 16, env.action_space.n]
+    layers_shapes = [obs.shape[0], 64, 64, env.action_space.n]
     dropout_rate = 0.1
     baseline_fitness = -50
 
